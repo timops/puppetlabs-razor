@@ -75,14 +75,13 @@ class razor::server {
     owner   => razor-server,
     group   => razor-server,
     mode    => 0660,
-    content => template('razor/bootstrap.ipxe.erb'),
+    content => template('razor/config.yaml.erb'),
     require => Exec["install razor binary distribution to ${dest}"],
-    notify  => Service['razor-server'],
   }
 
   exec { 'razor-db-create':
     provider => shell,
-    cwd      => "${dest}/bin",
+    cwd      => $dest,
     command  => 'razor-admin -e production migrate-database',
   }
 
