@@ -17,7 +17,7 @@
 class razor (
   $servername  = $fqdn,
   $libarchive  = undef,
-  $tftp        = true,
+  $tftp        = false,
   $db_user     = 'razor',
   $db_password = 'razor'
 ) {
