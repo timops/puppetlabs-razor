@@ -75,7 +75,7 @@ class razor::server {
     owner   => razor-server,
     group   => razor-server,
     mode    => 0660,
-    content => template('puppetlabs-razor/bootstrap.ipxe.erb'),
+    content => template('razor/bootstrap.ipxe.erb'),
     require => Exec["install razor binary distribution to ${dest}"],
     notify  => Service['razor-server'],
   }
