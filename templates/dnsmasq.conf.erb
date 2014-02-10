@@ -1,0 +1,10 @@
+dhcp-match=IPXEBOOT,175
+dhcp-boot=net:IPXEBOOT,bootstrap.ipxe
+dhcp-boot=undionly.kpxe
+# TFTP setup
+enable-tftp
+tftp-root=/var/lib/tftpboot
+interface=<%= @dhcp_iface %>
+log-dhcp
+dhcp-range=<%= @dhcp_range %>,infinite
+dhcp-option=option:router,<%= @dhcp_router %>

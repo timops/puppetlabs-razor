@@ -1,0 +1,116 @@
+# Thanks to William Lam for being the guru
+accepteula
+rootpw --iscrypted <%=
+  if node.root_password =~ /^\$\d+\$[^$]*\$/
+    node.root_password
+  else
+    require 'unix_crypt'
+    UnixCrypt::MD5.build(node.root_password)
+  end
+%>
+clearpart --firstdisk --overwritevmfs
+install --firstdisk --overwritevmfs
+reboot
+
+# The dynamically generated script (see %pre below) gets executed after the first reboot.
+# ...makes the existing network configuration (provided by DHCP) static.
+%include /tmp/networkconfig
+
+# Specifies a script to be executed before the kickstart configuration is to be evaluated.
+%pre --interpreter=busybox
+wget <%= stage_done_url("kickstart") %>
+
+# extract network info from bootup
+VMK_INT="vmk0"
+VMK_LINE=$(localcli network ip interface ipv4 get | grep "${VMK_INT}")
+IPADDR=$(echo "${VMK_LINE}" | awk '{print $2}')
+NETMASK=$(echo "${VMK_LINE}" | awk '{print $3}')
+GATEWAY=$(esxcfg-route | awk '{print $5}')
+DNS=$(cat /etc/resolv.conf | grep nameserver | awk '{ print $2 }')
+HOSTNAME=$(nslookup "${IPADDR}" "${DNS}" | grep Address | grep "${IPADDR}" | awk '{print $4}')
+
+echo "network --bootproto=static --addvmportgroup=false --device=vmnic0 --ip=${IPADDR} --netmask=${NETMASK} --gateway=${GATEWAY} --nameserver=${DNS} --hostname=${HOSTNAME}" > /tmp/networkconfig
+
+%firstboot --interpreter=busybox
+# set the hostname correctly before we do anythig else
+esxcli system hostname set --fqdn <%= node.hostname %>
+
+# enable HV (Hardware Virtualization to run nested 64bit Guests + Hyper-V VM)
+grep -i 'vhv.allow' /etc/vmware/config || echo 'vhv.allow = 'TRUE'' >> /etc/vmware/config
+
+# enable SSH support
+vim-cmd hostsvc/enable_ssh
+vim-cmd hostsvc/start_ssh
+
+# enable & start ESXi Shell (TSM)
+vim-cmd hostsvc/enable_esx_shell
+vim-cmd hostsvc/start_esx_shell
+
+esxcli system settings advanced set -o /UserVars/SuppressShellWarning -i 1
+
+# rename local datastore to something more meaningful
+vim-cmd hostsvc/datastore/rename datastore1 "$(hostname -s)-local-storage-1"
+
+# assign license
+# vim-cmd vimsvc/license --set <%= @esx_license %>
+
+
+# change the individual syslog rotation count
+esxcli system syslog config logger set --id=hostd --rotate=20 --size=2048
+esxcli system syslog config logger set --id=vmkernel --rotate=20 --size=2048
+esxcli system syslog config logger set --id=fdm --rotate=20
+esxcli system syslog config logger set --id=vpxa --rotate=20
+
+### NTP CONFIGURATIONS ###
+# IP address management is difficult.  Last octet is going to be static until razor provides a better way to expose arbitrary data.
+VMK0_IPADDR=$(esxcli network ip interface ipv4 get | grep vmk0 | awk '{print $2}')
+NTP_SERVER=$(echo ${VMK0_IPADDR} | awk '{print $1"."$2"."$3".5"}' FS=.)
+
+# Use next /16 network for storage.
+VMK1_IPADDR=$(echo ${VMK0_IPADDR} | awk '{print $1"."$2"."$3+1"."$4}' FS=.)
+
+cat > /etc/ntp.conf << __NTP_CONFIG__
+restrict default kod nomodify notrap noquerynopeer
+restrict 127.0.0.1
+server ${NTP_SERVER}
+__NTP_CONFIG__
+/sbin/chkconfig --level 345 ntpd on
+
+## vSwitch Configuration ##
+
+# additional configuration for default vSwitch0 (management and NFS)
+esxcli network vswitch standard portgroup add --portgroup-name NFS --vswitch-name vSwitch0
+
+esxcli network ip interface add --interface-name vmk1 --mtu 9000 --portgroup-name NFS
+esxcli network ip interface ipv4 set --interface-name vmk1 --ipv4 ${VMK1_IPADDR} --netmask 255.255.255.0 --type static
+
+# add and configure vSwitch1 (transport network) - needs to be vDS, so just create later...
+#esxcli network vswitch standard add --ports 256 --vswitch-name vSwitch1
+#esxcli network vswitch standard set --mtu 9000 --cdp-status listen --vswitch-name vSwitch1
+#esxcli network vswitch standard uplink add --uplink-name vmnic1 --vswitch-name vSwitch1
+
+### MOUNT NFS DATASTORE ###
+#esxcli storage nfs add --host ${NTP_SERVER} --share /volumes/Primp/primp-6 --volume-name himalaya-NFS-primp-6
+
+### FIREWALL CONFIGURATION ###
+
+# enable firewall
+esxcli network firewall set --default-action false --enabled yes
+
+# services to enable by default
+FIREWALL_SERVICES='syslog sshClient ntpClient updateManager httpClient netdump'
+for SERVICE in ${FIREWALL_SERVICES}; do
+    esxcli network firewall ruleset set --ruleset-id ${SERVICE} --enabled yes
+done
+
+# backup ESXi configuration to persist changes
+/sbin/auto-backup.sh
+
+# enter maintenance mode
+vim-cmd hostsvc/maintenance_mode_enter
+
+# copy %first boot script logs to persisted datastore
+cp /var/log/hostd.log "/vmfs/volumes/$(hostname -s)-local-storage-1/firstboot-hostd.log"
+cp /var/log/esxi_install.log "/vmfs/volumes/$(hostname -s)-local-storage-1/firstboot-esxi_install.log"
+wget <%= stage_done_url("finished") %>
+reboot

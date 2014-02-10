@@ -15,9 +15,11 @@
 #   include razor
 #
 class razor (
-  $servername = $fqdn,
-  $libarchive = undef,
-  $tftp       = true
+  $servername  = $fqdn,
+  $libarchive  = undef,
+  $tftp        = true,
+  $db_user     = 'razor',
+  $db_password = 'razor'
 ) {
   # Ensure libarchive is installed -- the users requested custom version, or
   # our own guesswork as to what the version is on this platform.

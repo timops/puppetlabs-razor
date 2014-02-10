@@ -68,4 +68,26 @@ class razor::server {
   file { "${dest}/log/production.log":
     ensure  => file, owner => razor-server, group => razor-server, mode => 0660
   }
+
+  # additional resources added for POC deployment.
+  file { "${dest}/config.yaml":
+    ensure  => file,
+    owner   => razor-server,
+    group   => razor-server,
+    mode    => 0660,
+    content => template('puppetlabs-razor/bootstrap.ipxe.erb'),
+    require => Exec["install razor binary distribution to ${dest}"],
+    notify  => Service['razor-server'],
+  }
+
+  service { 'razor-server':
+    ensure => running,
+  }
+
+  exec { 'razor-db-create':
+    provider => shell,
+    cwd      => "${dest}/bin",
+    command  => 'razor-admin -e production migrate-database',
+  }
+
 }

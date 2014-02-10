@@ -29,7 +29,6 @@ version    git_version
 dependency 'puppetlabs/java', '>= 1.0.1'
 dependency 'puppetlabs/tftp', '>= 0.2.1'
 
-
 # Generate the changelog file
 system("'#{moduledir}'/bin/git-log-to-changelog > '#{moduledir}'/CHANGELOG")
 $? == 0 or fail "changelog generation #{$?}!"

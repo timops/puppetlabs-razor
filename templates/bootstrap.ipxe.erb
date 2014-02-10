@@ -26,12 +26,11 @@ set dhcp_mac net3$${net3/mac:hexhyp}
 
 
 :chain_boot
-echo chain booting the razor script from <%= @server %>
-chain http://<%= @server %>:8080/svc/boot?net0=${net0/mac:hexhyp}&net1=${net1/mac:hexhyp}&net2=${net2/mac:hexhyp}&net3=${net3/mac:hexhyp}&dhcp_mac=${dhcp_mac}&serial=${serial}&asset=${asset}&uuid=${uuid} || goto error
+chain http://<%= @ipaddress %>:8080/svc/boot?net0=${net0/mac:hexhyp}&net1=${net1/mac:hexhyp}&net2=${net2/mac:hexhyp}&net3=${net3/mac:hexhyp}&dhcp_mac=${dhcp_mac}&serial=${serial}&asset=${asset}&uuid=${uuid} || goto error
 echo successfully completed the chain-loaded script; booting locally with 'exit'
 exit
 
 :error
-prompt --key s --timeout 60 ERROR, hit 's' for the iPXE shell; reboot in 60 seconds && shell || reboot
-# just in case...
+echo error handler invoked; waiting one minute and rebooting
+sleep 60
 reboot
