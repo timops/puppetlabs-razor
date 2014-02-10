@@ -80,10 +80,6 @@ class razor::server {
     notify  => Service['razor-server'],
   }
 
-  service { 'razor-server':
-    ensure => running,
-  }
-
   exec { 'razor-db-create':
     provider => shell,
     cwd      => "${dest}/bin",
