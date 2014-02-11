@@ -2,7 +2,7 @@ $db_user = 'razor'
 $db_password = 'razor'
 
 $dhcp_iface = 'eth1'
-$dhcp_ip = '10.127.1.10/24'
+$dhcp_ip = '10.127.1.10'
 $dhcp_netmask = '255.255.255.0'
 $dhcp_range = '10.127.1.100,10.127.1.150'
 $dhcp_router = '10.127.1.1'
