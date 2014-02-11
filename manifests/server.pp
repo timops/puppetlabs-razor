@@ -77,7 +77,7 @@ class razor::server {
     mode    => 0660,
     content => template('razor/config.yaml.erb'),
     require => Exec["install razor binary distribution to ${dest}"],
-  }
+  } ->
 
   exec { 'razor-db-create':
     provider => shell,
