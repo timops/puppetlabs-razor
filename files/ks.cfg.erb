@@ -113,7 +113,7 @@ done
 #vim-cmd hostsvc/maintenance_mode_enter
 
 # enable dynamic DNS
-esxcli system settings advanced set -o /Misc/PreferredHostName -s
+esxcli system settings advanced set -o /Misc/PreferredHostName -s <%= node.hostname %>
 
 # copy %first boot script logs to persisted datastore
 cp /var/log/hostd.log "/vmfs/volumes/$(hostname -s)-local-storage-1/firstboot-hostd.log"
