@@ -29,7 +29,10 @@ GATEWAY=$(esxcfg-route | awk '{print $5}')
 DNS=$(cat /etc/resolv.conf | grep nameserver | awk '{ print $2 }')
 HOSTNAME=$(nslookup "${IPADDR}" "${DNS}" | grep Address | grep "${IPADDR}" | awk '{print $4}')
 
-echo "network --bootproto=static --addvmportgroup=false --device=vmnic0 --ip=${IPADDR} --netmask=${NETMASK} --gateway=${GATEWAY} --nameserver=${DNS} --hostname=${HOSTNAME}" > /tmp/networkconfig
+#echo "network --bootproto=static --addvmportgroup=false --device=vmnic0 --ip=${IPADDR} --netmask=${NETMASK} --gateway=${GATEWAY} --nameserver=${DNS} --hostname=${HOSTNAME}" > /tmp/networkconfig
+
+# Use infinite lease time with ISC dhcp.
+echo "network --bootproto=dhcp --addvmportgroup=false --device=vmnic0" > /tmp/networkconfig
 
 %firstboot --interpreter=busybox
 # set the hostname correctly before we do anythig else
@@ -107,7 +110,10 @@ done
 /sbin/auto-backup.sh
 
 # enter maintenance mode
-vim-cmd hostsvc/maintenance_mode_enter
+#vim-cmd hostsvc/maintenance_mode_enter
+
+# enable dynamic DNS
+esxcli system settings advanced set -o /Misc/PreferredHostName -s
 
 # copy %first boot script logs to persisted datastore
 cp /var/log/hostd.log "/vmfs/volumes/$(hostname -s)-local-storage-1/firstboot-hostd.log"
