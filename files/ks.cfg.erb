@@ -34,6 +34,11 @@ HOSTNAME=$(nslookup "${IPADDR}" "${DNS}" | grep Address | grep "${IPADDR}" | awk
 # Use infinite lease time with ISC dhcp.
 echo "network --bootproto=dhcp --addvmportgroup=false --device=vmnic0" > /tmp/networkconfig
 
+# join vCenter script
+cat > /tmp/joinvCenter.py << __JOIN_VC__
+
+__JOIN_VC__
+
 %firstboot --interpreter=busybox
 # set the hostname correctly before we do anythig else
 esxcli system hostname set --fqdn <%= node.hostname %>
@@ -113,10 +118,18 @@ done
 #vim-cmd hostsvc/maintenance_mode_enter
 
 # enable dynamic DNS
-esxcli system settings advanced set -o /Misc/PreferredHostName -s <%= node.hostname %>
+esxcli system settings advanced set -o /Misc/PreferredHostName -s <%= node.hostname.to_s.split('.')[0] %>
+# trick to restart the management network, which registers with dns before we join vcenter (DNS is required for this).
+esxcli network ip interface set -e false -i vmk0
+esxcli network ip interface set -e true -i vmk0
 
 # copy %first boot script logs to persisted datastore
 cp /var/log/hostd.log "/vmfs/volumes/$(hostname -s)-local-storage-1/firstboot-hostd.log"
 cp /var/log/esxi_install.log "/vmfs/volumes/$(hostname -s)-local-storage-1/firstboot-esxi_install.log"
-wget <%= stage_done_url("finished") %>
+
+%firstboot --interpreter=python
+<%= File.read(File.join(File.expand_path(File.dirname(__FILE__)), 'joinvcenter.py')) %>
+
+%firstboot --interpreter=busybox
 reboot
+wget <%= stage_done_url("finished") %>
