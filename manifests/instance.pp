@@ -7,7 +7,7 @@ class razor::instance (
 {
 
   exec { 'razor create-broker':
-    command => "/usr/local/bin/razor create-broker --name=${broker} --type=${broker}"
+    command => "/usr/local/bin/razor create-broker --name=${broker} --broker-type=${broker}"
   }
 
   file { "/tmp/policy${::hostname}.json":
