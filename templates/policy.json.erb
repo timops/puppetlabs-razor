@@ -1,0 +1,12 @@
+{
+  "name": "<%= target_os %>",
+  "repo": { "name": "<%= target_os %>" },
+  "task": { "name": "vmware_esxi" },
+  "broker": { "name": "<%= @broker %>" },
+  "enabled": true,
+  "hostname": "<%= @target_os %>${id}.<%= @target_fqdn %>",
+  "root_password": "password",
+  "max_count": "100",
+  "rule_number": "100",
+  "tags": [{ "name": "small", "rule": ["<=", ["num", ["fact", "processorcount"]], 32]}]
+}
