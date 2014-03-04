@@ -7,7 +7,7 @@ class razor::instance (
 {
 
   exec { 'razor create-broker':
-    command => "razor create-broker --name=${broker} --type=${broker}"
+    command => "/usr/local/bin/razor create-broker --name=${broker} --type=${broker}"
   }
 
   file { "/tmp/policy${::hostname}.json":
@@ -19,7 +19,7 @@ class razor::instance (
   }
 
   exec { 'razor create-policy':
-    command => "razor create-policy --json /tmp/policy${::hostname}.json",
+    command => "/usr/local/bin/razor create-policy --json /tmp/policy${::hostname}.json",
     require => File["/tmp/policy${::hostname}.json"],
   }
 
