@@ -18,12 +18,14 @@ class razor::instance (
     content => template('razor/policy.json.erb'),
   }
 
-  exec { 'razor create-policy':
-    command => "/usr/local/bin/razor create-policy --json /tmp/policy${::hostname}.json",
-    require => File["/tmp/policy${::hostname}.json"],
-  }
+  # EXAMPLE: razor -d create-repo --name=esx-5.5 --iso-url file:///tmp/VMware-VMvisor-Installer-5.5.0-1331820.x86_64.iso
+  #exec { 'razor -d create-repo':
+  #  command => "/usr/local/bin/razor -d create-repo --name ${target_os} --iso-url ${iso}"
+  #}
 
-  # TODO: automate repo creation.
-  # razor -d create-repo --name=esx-5.5 --iso-url file:///tmp/VMware-VMvisor-Installer-5.5.0-1331820.x86_64.iso
+  #exec { 'razor create-policy':
+  #  command => "/usr/local/bin/razor create-policy --json /tmp/policy${::hostname}.json",
+  #  require => [ File["/tmp/policy${::hostname}.json"], Exec['razor create-policy'] ],
+  #}
 
 }
