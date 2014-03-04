@@ -1,0 +1,25 @@
+# This works for ISC DHCP Server 4.1-ESV-R4 (ubuntu 12.04 LTS default)
+
+ddns-updates on;
+ddns-update-style interim;
+ignore client-updates;
+update-static-leases on;
+
+option domain-name "<%= @server_domain %>";
+
+subnet <%= @dhcp_network %> netmask <%= @dhcp_netmask %> {
+  default-lease-time -1;
+  max-lease-time -1;
+  range <%= @dhcp_range %>;
+  option subnet-mask <%= @dhcp_netmask %>;
+  option domain-name-servers <%= @dhcp_dns %>;
+  option ntp-servers <%= @dhcp_ntp %>;
+  # option broadcast-address 10.127.1.255;
+  option routers <%= @dhcp_router %>;
+  if exists user-class and option user-class = "iPXE" {
+    filename "bootstrap.ipxe";
+  } else {
+    filename "undionly.kpxe";
+  }
+  next-server 10.127.1.10;
+}
