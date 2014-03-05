@@ -20,8 +20,8 @@ class razor::instance (
 
   # EXAMPLE: razor -d create-repo --name=esx-5.5 --iso-url file:///tmp/VMware-VMvisor-Installer-5.5.0-1331820.x86_64.iso
   exec { 'razor -d create-repo':
-    command => "/usr/local/bin/razor -d create-repo --name ${target_os} --iso-url ${iso}",
-    onlyif => "test -f ${iso}",
+    command => "/usr/local/bin/razor -d create-repo --name ${target_os} --iso-url file://${iso}",
+    onlyif => "/usr/bin/test -f ${iso}",
   }
 
   exec { 'razor create-policy':
