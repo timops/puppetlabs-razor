@@ -7,15 +7,8 @@ class razor::instance (
 {
 
   exec { 'razor create-broker':
-    command => "/usr/local/bin/razor create-broker --name=${broker} --broker-type=${broker}"
-  }
-
-  file { "/tmp/policy${::hostname}.json":
-    ensure  => file,
-    owner   => 'root',
-    group   => 'root',
-    mode    => 0644,
-    content => template('razor/policy.json.erb'),
+    command => "/usr/local/bin/razor create-broker --name=${broker} --broker-type=${broker}",
+    unless  => "/usr/local/bin/razor brokers ${broker}",
   }
 
   # EXAMPLE: razor -d create-repo --name=esx-5.5 --iso-url file:///tmp/VMware-VMvisor-Installer-5.5.0-1331820.x86_64.iso
@@ -24,10 +17,18 @@ class razor::instance (
     onlyif => "/usr/bin/test -f ${iso}",
   }
 
+  file { "/tmp/policy${::hostname}.json":
+    ensure    => file,
+    owner     => 'root',
+    group     => 'root',
+    mode      => 0644,
+    content   => template('razor/policy.json.erb'),
+    subscribe => Exec['razor -d create-repo'],
+  }
+
   exec { 'razor create-policy':
     command   => "/usr/local/bin/razor create-policy --json /tmp/policy${::hostname}.json",
-    require   => [ File["/tmp/policy${::hostname}.json"], Exec['razor create-policy'] ],
-    subscribe => Exec['razor -d create-repo'],
+    subscribe => Exec["/tmp/policy${::hostname}.json"],
   }
 
 }
