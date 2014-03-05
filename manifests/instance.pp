@@ -28,7 +28,7 @@ class razor::instance (
 
   exec { 'razor create-policy':
     command   => "/usr/local/bin/razor create-policy --json /tmp/policy${::hostname}.json",
-    subscribe => Exec["/tmp/policy${::hostname}.json"],
+    subscribe => File["/tmp/policy${::hostname}.json"],
   }
 
 }
