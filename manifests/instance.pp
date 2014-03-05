@@ -17,18 +17,22 @@ class razor::instance (
     onlyif => "/usr/bin/test -f ${iso}",
   }
 
-  file { "/tmp/policy${::hostname}.json":
+  file { "/tmp/policy-${::hostname}.json":
     ensure    => file,
     owner     => 'root',
     group     => 'root',
     mode      => 0644,
     content   => template('razor/policy.json.erb'),
-    subscribe => Exec['razor -d create-repo'],
   }
 
   exec { 'razor create-policy':
-    command   => "/usr/local/bin/razor create-policy --json /tmp/policy${::hostname}.json",
-    subscribe => File["/tmp/policy${::hostname}.json"],
+    command   => "/usr/local/bin/razor create-policy --json /tmp/policy-${::hostname}.json",
+    onlyif => "/usr/bin/test -f ${iso}",
   }
+
+  # Why doesn't this work?
+  #Exec['razor -d create-repo'] ~> File["/tmp/policy-${::hostname}.json"] ~> Exec['razor create-policy']
+
+  Exec['razor -d create-repo'] ~> File["/tmp/policy-${::hostname}.json"] -> Exec['razor create-policy']
 
 }
