@@ -10,8 +10,10 @@ auto eth0
 iface eth0 inet dhcp
 
 # Server interface (tftp, dhcpd, etc.)
+# Don't add a gateway unless you want it to become the default GW (surprise!)
 auto eth1
 iface eth1 inet static
 address <%= @server_ip %> 
 netmask <%= @dhcp_netmask %>
-gateway <%= @dhcp_router %>
+dns-search <%= @server_domain %>
+dns-nameservers <%= @dhcp_dns %>
