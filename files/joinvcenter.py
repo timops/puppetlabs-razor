@@ -49,10 +49,10 @@ try:
         req = urllib2.Request(url)
         page = urllib2.urlopen(req)
         page_content= page.read()
-except IOError, e:
+except IOError as e:
+        syslog.syslog(syslogGhetto + ' Failed to retrieve MOB data -> ' + str(e.args))
         opener.close()
-        syslog.syslog(syslogGhetto + ' Failed to retrieve MOB data')
-        sys.exit(1)
+        raise
 else:
         syslog.syslog(syslogGhetto + ' Succesfully requested MOB data')
  
